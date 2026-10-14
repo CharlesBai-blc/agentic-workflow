@@ -5,6 +5,7 @@
 # Tier 2 Surgery runs only on escalation. Every model call is a standalone pass (scripts/lib/passes.sh).
 # Resume is automatic from .agents/ledger.json; STATE.md carries the human resume prompt.
 set -uo pipefail
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then echo "orchestrate.sh needs bash >= 4 (brew install bash); found $BASH_VERSION" >&2; exit 1; fi
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export FLEET_ROOT="${FLEET_ROOT:-$HERE}"
 for lib in common ledger worktree tripwire gate quota dryrun passes pr compile-prompt checkpoint progress-report; do
@@ -231,11 +232,18 @@ surgery() {  # surgery <layer> TASK...
 
 # ---- waves and layers ---------------------------------------------------------------------------------
 run_wave() {  # no new dispatch while any task in the wave needs Surgery (Section 2 pause rule)
-  local l="$1" w="$2" t; local -a blocked todo
+  local l="$1" w="$2" t st; local -a blocked todo
   while :; do
-    mapfile -t blocked < <(for t in $(wave_tasks "$l" "$w"); do case "$(task_status "$t")" in CONTRACT_DEFECT|STRIKE_3_FAILED|QUARANTINED|IN_SURGERY) echo "$t" ;; esac; done)
+    blocked=(); todo=()
+    for t in $(wave_tasks "$l" "$w"); do
+      st="$(task_status "$t")"
+      case "$st" in
+        CONTRACT_DEFECT|STRIKE_3_FAILED|QUARANTINED|IN_SURGERY) blocked+=("$t") ;;
+        IN_REVIEW) ship_task "$t" >/dev/null ;;
+        PENDING|GATE_FAILED|RUNNING) todo+=("$t") ;;
+      esac
+    done
     if [[ ${#blocked[@]} -gt 0 ]]; then surgery "$l" "${blocked[@]}"; continue; fi
-    mapfile -t todo < <(for t in $(wave_tasks "$l" "$w"); do case "$(task_status "$t")" in IN_REVIEW) ship_task "$t" >/dev/null ;; PENDING|GATE_FAILED|RUNNING) echo "$t" ;; esac; done)
     [[ ${#todo[@]} -eq 0 ]] && break
     quota_or_pause codex; run_batch "${todo[@]:0:$(max_parallel)}"
   done

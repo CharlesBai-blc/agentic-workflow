@@ -17,6 +17,7 @@ want() { if have "$1"; then ok "$1"; else wrn "$1 missing${2:+ — $2}"; fi; }
 
 check_tools() {
   echo "== tools"
+  [[ "${BASH_VERSINFO[0]}" -ge 4 ]] && ok "bash $BASH_VERSION" || bad "bash $BASH_VERSION is too old; brew install bash (Homebrew's bash must precede /bin/bash on PATH)"
   need git "git --version"; need jq "jq --version"; need yq "yq --version" "brew install yq"
   yq --version 2>/dev/null | grep -q 'mikefarah' && ok "yq is mikefarah/yq v4" || bad "yq must be mikefarah/yq v4 (brew install yq); the Python yq wrapper is not supported"
   need gh "gh --version"; need codex "codex --version" "npm i -g @openai/codex"; need claude "claude --version" "npm i -g @anthropic-ai/claude-code"
@@ -96,7 +97,7 @@ dry_run() {
 
 main() {
   if [[ "${1:-}" == "--dry-run" ]]; then
-    echo "== tools (dry run needs: git jq yq just check-jsonschema)"; for t in git jq yq just check-jsonschema; do need "$t"; done
+    echo "== tools (dry run needs: bash>=4 git jq yq just check-jsonschema)"; [[ "${BASH_VERSINFO[0]}" -ge 4 ]] && ok "bash $BASH_VERSION" || bad "bash $BASH_VERSION too old: brew install bash"; for t in git jq yq just check-jsonschema; do need "$t"; done
     [[ $FAILS -eq 0 ]] && dry_run
   else
     check_tools; check_auth; check_remote; check_files
