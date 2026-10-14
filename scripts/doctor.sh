@@ -58,6 +58,7 @@ check_remote() {
 check_files() {
   echo "== repository files"
   [[ -f "$IDEA_FILE" ]] && ok "IDEA.md" || bad "IDEA.md missing"
+  if [[ -f "$IDEA_FILE" ]]; then "$HERE/idea-check.sh" "$IDEA_FILE" >"$LOG_DIR/idea-check.log" 2>&1 && ok "idea-check.sh passes (ready: true)" || bad "idea-check.sh fails — run scripts/idea-check.sh for the list"; fi
   for f in AGENTS.md CLAUDE.md orchestrate.sh .graphifyignore .gitignore .claude/settings.json .claude/surgery-mcp.json; do [[ -e "$ROOT/$f" ]] && ok "$f" || bad "$f missing"; done
   jq -e . "$ROOT/.claude/settings.json" >/dev/null 2>&1 && ok "settings.json valid JSON" || bad "settings.json invalid"
   for h in search-guard.sh surgery-integrity.sh; do [[ -x "$ROOT/.claude/hooks/$h" ]] && ok "hook $h executable" || bad "hook $h missing or not executable"; done
