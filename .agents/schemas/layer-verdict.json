@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agents/schemas/layer-verdict.json",
+  "title": "Tier 2 Layer Sign-Off Verdict",
+  "description": "Returned by the Claude Opus Phase B pass via --json-schema (structured_output in the final stream-json result event) or written to .agents/reviews/LAYER-N-verdict.json as the fallback. The human-readable audit lives in .agents/reviews/LAYER-N-signoff.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["layer", "verdict", "summary", "rework_tasks", "audit_file"],
+  "properties": {
+    "layer": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["SIGNED_OFF", "REWORK"]
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 800,
+      "description": "At most 5 sentences for the human progress report."
+    },
+    "spec_drift": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "finding"],
+        "properties": {
+          "file": { "type": "string", "maxLength": 300 },
+          "finding": { "type": "string", "maxLength": 400 }
+        }
+      },
+      "description": "Files whose implementation disagrees with SYSTEM_SPEC.md or a frozen contract."
+    },
+    "rework_tasks": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "string",
+        "pattern": "^TASK-[0-9]{3}-[0-9]{3}$"
+      },
+      "description": "Task IDs of the new rework task files Opus wrote to .agents/tasks/ for this layer. Must be empty when verdict is SIGNED_OFF and non-empty when verdict is REWORK."
+    },
+    "audit_file": {
+      "type": "string",
+      "pattern": "^\\.agents/reviews/LAYER-[0-9]+-signoff\\.md$"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "verdict": { "const": "REWORK" } } },
+      "then": { "properties": { "rework_tasks": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "verdict": { "const": "SIGNED_OFF" } } },
+      "then": { "properties": { "rework_tasks": { "maxItems": 0 } } }
+    }
+  ]
+}

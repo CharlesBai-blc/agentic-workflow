@@ -1,0 +1,55 @@
+# --- fleet runtime state (never committed) -----------------------------------
+graphify-out/
+.agents/logs/
+.agents/receipts/
+.agents/run.lock
+.agents/surgery.current
+.agents/prompts/
+.agents/tmp/
+.agents/quota/
+*.bundle
+
+# --- dependencies --------------------------------------------------------------
+node_modules/
+.venv/
+venv/
+.pnpm-store/
+
+# --- build / test output -------------------------------------------------------
+dist/
+build/
+out/
+coverage/
+.turbo/
+.next/
+.cache/
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.stryker-tmp/
+reports/mutation/
+.mutmut-cache
+html/
+
+# --- editor / OS -----------------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- obsidian workspace cache (vault config is committed; per-user state is not) ---
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache/
+
+# --- local-only CLI state ---------------------------------------------------------
+.claude/settings.local.json
+.codex/sessions/
+.env
+.env.local
+
+# keep tracked placeholder files in otherwise-ignored directories
+!.agents/receipts/.gitkeep
+!.agents/logs/.gitkeep

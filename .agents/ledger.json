@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "project": "unset",
+  "created_at": "1970-01-01T00:00:00Z",
+  "updated_at": "1970-01-01T00:00:00Z",
+  "current_layer": 0,
+  "run_state": "IDLE",
+  "halt_reason": null,
+  "layers": [],
+  "tasks": {},
+  "quota": {
+    "codex": { "five_hour_pct": null, "weekly_pct": null, "resets_at": null, "checked_at": null, "source": "none", "state": "UNKNOWN" },
+    "claude": { "five_hour_pct": null, "weekly_pct": null, "resets_at": null, "checked_at": null, "source": "none", "state": "UNKNOWN" }
+  },
+  "incidents": []
+}

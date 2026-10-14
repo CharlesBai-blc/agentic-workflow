@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agents/schemas/review.json",
+  "title": "Tier 3 Per-Task Review Verdict",
+  "description": "Returned by the read-only Tier 3 reviewer (codex exec --sandbox read-only --output-schema) for `git diff main...agent/TASK-ID`. orchestrate.sh posts verdict and reasons to the PR with `gh pr comment`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "verdict", "reasons", "contract_adherence", "test_adherence"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]{3}-[0-9]{3}$"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["APPROVE", "REJECT"]
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "location", "reason"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["blocker", "major", "minor"]
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "file:line, or the literal string 'diff' for a cross-cutting finding."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 400,
+            "description": "One or two sentences. No code excerpts longer than one line."
+          }
+        }
+      },
+      "description": "At most 5 reasons. A REJECT must carry at least one blocker or major reason. An APPROVE may carry minor notes only."
+    },
+    "contract_adherence": {
+      "type": "string",
+      "enum": ["FULL", "PARTIAL", "VIOLATED"],
+      "description": "Whether the diff implements the frozen contract exactly as written."
+    },
+    "test_adherence": {
+      "type": "string",
+      "enum": ["HONEST", "GAMED", "UNKNOWN"],
+      "description": "HONEST: tests exercise real behavior. GAMED: tests or code were shaped to pass rather than to satisfy the contract."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "verdict": { "const": "REJECT" } } },
+      "then": {
+        "properties": {
+          "reasons": {
+            "minItems": 1,
+            "contains": {
+              "properties": { "severity": { "enum": ["blocker", "major"] } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "verdict": { "const": "APPROVE" } } },
+      "then": {
+        "properties": {
+          "contract_adherence": { "const": "FULL" },
+          "test_adherence": { "const": "HONEST" },
+          "reasons": {
+            "items": { "properties": { "severity": { "const": "minor" } } }
+          }
+        }
+      }
+    }
+  ]
+}

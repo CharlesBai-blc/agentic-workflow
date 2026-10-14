@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agents/schemas/receipt.json",
+  "title": "Tier 3 Coder Receipt",
+  "description": "Structured receipt returned by every Tier 3 coding pass (codex exec --output-schema). No diffs, file contents, or raw logs are allowed in any field. orchestrate.sh appends commit_sha and pr_url to the ledger after it commits and opens the PR.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "status",
+    "attempt",
+    "files_changed",
+    "test_summary",
+    "defect_location",
+    "root_cause"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]{3}-[0-9]{3}$",
+      "description": "Task identifier, e.g. TASK-002-014 (layer 2, task 14)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["DONE", "CONTRACT_DEFECT", "ESCALATE_STRIKE_3"],
+      "description": "DONE: just check passed in the worktree. CONTRACT_DEFECT: a frozen contract or acceptance test is syntactically invalid or impossible (exit on strike 1). ESCALATE_STRIKE_3: three verification failures."
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "Verification attempt on which the pass stopped."
+    },
+    "files_changed": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "description": "Repo-relative paths written by this pass. Must be a subset of OWNED_FILES."
+    },
+    "test_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failed", "skipped", "command", "summary_line"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "command": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "The command that produced the summary, normally `just check`."
+        },
+        "summary_line": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "The single final summary line from the test runner. Never a log."
+        }
+      }
+    },
+    "defect_location": {
+      "type": ["string", "null"],
+      "pattern": "^[^:\\s]+:[0-9]+$",
+      "maxLength": 300,
+      "description": "file:line of the defect inside a frozen contract or acceptance test. Required (non-null) when status is CONTRACT_DEFECT, null otherwise."
+    },
+    "root_cause": {
+      "type": ["string", "null"],
+      "maxLength": 600,
+      "description": "At most 3 sentences. Required (non-null) when status is ESCALATE_STRIKE_3 or CONTRACT_DEFECT, null when DONE."
+    },
+    "triage_hypothesis": {
+      "type": ["string", "null"],
+      "maxLength": 600,
+      "description": "The 10-failure-triage hypothesis stated before attempt 3. Null if the pass never reached strike 2."
+    },
+    "deps_added": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "type": "string", "minLength": 1, "maxLength": 120 },
+      "description": "Packages added. Every entry must be in the task's APPROVED_DEPS."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "CONTRACT_DEFECT" } } },
+      "then": {
+        "properties": {
+          "defect_location": { "type": "string" },
+          "root_cause": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "ESCALATE_STRIKE_3" } } },
+      "then": {
+        "properties": {
+          "attempt": { "const": 3 },
+          "root_cause": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "DONE" } } },
+      "then": {
+        "properties": {
+          "defect_location": { "type": "null" },
+          "test_summary": { "properties": { "failed": { "const": 0 } } }
+        }
+      }
+    }
+  ]
+}

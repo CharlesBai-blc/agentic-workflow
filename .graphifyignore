@@ -1,0 +1,109 @@
+# .graphifyignore — force Graphify into 100% local tree-sitter AST mode (zero LLM tokens).
+#
+# Graphify has two extraction modes:
+#   * code mode   -> local tree-sitter AST parsing + Leiden communities (free)
+#   * doc mode    -> LLM-assisted semantic extraction for prose/images/notebooks (costs tokens)
+# Everything that would be routed to doc mode is excluded here, so `graphify update`
+# never touches a model. Contracts that live in code files (.d.ts, .py, .ts, .rs, .go)
+# stay in the graph; prose contracts (OpenAPI YAML, JSON schemas) do not, which is why
+# AGENTS.md allows a targeted Grep/Glob fallback for exactly those files.
+
+# --- prose / documentation (doc mode) ---------------------------------------
+*.md
+*.mdx
+*.markdown
+*.rst
+*.txt
+*.adoc
+*.tex
+docs/
+README*
+CHANGELOG*
+LICENSE*
+
+# --- agent state, skills, prompts, reports -----------------------------------
+.agents/
+.claude/
+.codex/
+.github/
+.obsidian/
+IDEA.md
+AGENTS.md
+CLAUDE.md
+
+# --- graphify's own output (never re-ingest) ---------------------------------
+graphify-out/
+
+# --- notebooks, images, pdfs (vision / doc mode) -----------------------------
+*.ipynb
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.bmp
+*.ico
+*.html
+*.htm
+
+# --- data & config (not code; no AST, would fall through to doc mode) --------
+*.json
+*.jsonl
+*.yaml
+*.yml
+*.toml
+*.ini
+*.cfg
+*.env
+*.env.*
+*.csv
+*.tsv
+*.xml
+*.lock
+*.lockb
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+uv.lock
+poetry.lock
+
+# --- dependencies, builds, caches --------------------------------------------
+node_modules/
+.venv/
+venv/
+.pnpm-store/
+dist/
+build/
+out/
+coverage/
+.cache/
+.turbo/
+.next/
+.nuxt/
+target/
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.stryker-tmp/
+reports/mutation/
+.mutmut-cache
+
+# --- generated / vendored code (noise in the graph) --------------------------
+*.min.js
+*.min.css
+*.generated.*
+*_pb2.py
+*.pb.go
+__generated__/
+generated/
+vendor/
+__snapshots__/
+*.snap
+
+# --- git plumbing, bundles, worktrees ----------------------------------------
+.git/
+*.bundle
