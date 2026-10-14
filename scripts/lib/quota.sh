@@ -17,7 +17,8 @@ _q_json() {  # _q_json five weekly resets_at source state
 }
 _q_store() {  # _q_store <cli> <json>
   printf '%s\n' "$2" > "$QUOTA_DIR/$1.json"
-  [[ -f "$LEDGER" ]] && ledger_write '.quota[$c] = $q' --arg c "$1" --argjson q "$2"
+  [[ -f "$LEDGER" && -z "${QUOTA_NO_LEDGER:-}" ]] && ledger_write '.quota[$c] = $q' --arg c "$1" --argjson q "$2"
+  return 0
 }
 _q_state_for() {  # _q_state_for five weekly -> OK|WARNING
   local c; c="$(soft_ceiling)"
@@ -84,6 +85,7 @@ quota_gate() {
   f="$QUOTA_DIR/$cli.json"; QUOTA_RESETS_AT=""
   if [[ -f "$f" ]]; then
     IFS='|' read -r st pct5 pctw reset < <(jq -r '[(.state // "UNKNOWN"), (.five_hour_pct // ""), (.weekly_pct // ""), (.resets_at // "")] | join("|")' "$f")
+    if [[ -n "$reset" ]] && [[ "$(epoch_of "$reset" 2>/dev/null || echo 0)" -lt "$(date +%s)" ]]; then st=OK; pct5=""; pctw=""; fi   # stale reading: window already reset
     if [[ "$st" == REJECTED ]]; then
       QUOTA_RESETS_AT="${reset:-$(iso_of $(( $(date +%s) + 3600 )))}"; echo "$cli reported a rate-limit rejection"; return 1
     fi

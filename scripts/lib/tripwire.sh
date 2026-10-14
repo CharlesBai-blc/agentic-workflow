@@ -19,6 +19,7 @@ _sibling_status() {  # status + HEAD of every worktree except the task's own
   local t="$1" w
   for w in $(wt_list); do
     [[ "$w" == "$(wt_dir "$t")" ]] && continue
+    [[ " ${TRIPWIRE_SIBLING_EXCLUDE:-} " == *" $(basename "$w") "* ]] && continue   # same parallel batch
     echo "## $w $(git -C "$w" rev-parse HEAD 2>/dev/null)"
     git -C "$w" status --porcelain --untracked-files=all 2>/dev/null
   done
@@ -49,12 +50,12 @@ _dep_names_py() {   # pyproject [project].dependencies + optional-dependencies +
     | if type=="object" then (.include // "") else . end' 2>/dev/null | sed -E 's/^[[:space:]]*([A-Za-z0-9_.-]+).*/\1/' | tr 'A-Z_' 'a-z-' | sed '/^$/d'
 }
 _new_deps() {  # _new_deps TASK -> names present in the worktree manifests but not in main's
-  local t="$1" d f base wt kind; d="$(wt_dir "$t")"
+  local t="$1" d f base wt kind mb; d="$(wt_dir "$t")"; mb="$(wt_base "$d")"
   for f in $(cd "$d" && git ls-files -- 'package.json' '*/package.json' 'pyproject.toml' '*/pyproject.toml' 2>/dev/null); do
-    git -C "$d" diff --quiet "$(base_branch)" -- "$f" 2>/dev/null && [[ -z "$(git -C "$d" ls-files --others --exclude-standard -- "$f")" ]] && continue
+    git -C "$d" diff --quiet "$mb" -- "$f" 2>/dev/null && [[ -z "$(git -C "$d" ls-files --others --exclude-standard -- "$f")" ]] && continue
     case "$f" in *package.json) kind=ts ;; *) kind=py ;; esac
     base="$(mktemp "$TMP_DIR/dep.XXXXXX")"; wt="$d/$f"
-    git -C "$d" show "$(base_branch):$f" > "$base" 2>/dev/null || : > "$base"
+    git -C "$d" show "$mb:$f" > "$base" 2>/dev/null || : > "$base"
     if [[ $kind == ts ]]; then comm -13 <(_dep_names_ts "$base" | sort -u) <(_dep_names_ts "$wt" | sort -u)
     else comm -13 <(_dep_names_py "$base" | sort -u) <(_dep_names_py "$wt" | sort -u); fi
     rm -f "$base"

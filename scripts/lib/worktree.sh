@@ -72,7 +72,7 @@ wt_stage_all() { local d; d="$(wt_dir "$1")"; git -C "$d" add -A -N . >>"$WT_LOG
 # wt_changed_files TASK — every path that differs from main (committed, staged, unstaged, untracked)
 wt_changed_files() {
   local d; d="$(wt_dir "$1")"
-  { git -C "$d" diff --name-only "$(base_branch)" HEAD
+  { git -C "$d" diff --name-only "$(wt_base "$d")" HEAD
     git -C "$d" diff --name-only HEAD
     git -C "$d" ls-files --others --exclude-standard; } 2>/dev/null | sed '/^$/d' | sort -u
 }
@@ -82,7 +82,7 @@ wt_commit() {
   local t="$1" msg="$2" d; d="$(wt_dir "$t")"
   git -C "$d" add -A >>"$WT_LOG" 2>&1
   if git -C "$d" diff --cached --quiet; then log "nothing to commit for $t"; git -C "$d" rev-parse HEAD; return 0; fi
-  git -C "$d" -c user.name="fleet-bot" -c user.email="fleet-bot@localhost" commit -q -m "$msg" >>"$WT_LOG" 2>&1 || die "commit failed for $t"
+  git -C "$d" commit -q -m "$msg" >>"$WT_LOG" 2>&1 || die "commit failed for $t"
   git -C "$d" rev-parse HEAD
 }
 

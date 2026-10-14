@@ -55,11 +55,11 @@ while IFS= read -r f; do
   in_owned "$f" || fail "untracked file outside OWNED_FILES: $f"
 done < <(git -C "$wt" ls-files --others --exclude-standard)
 
-# (b) ownership of every change vs main (committed, staged and unstaged)
+# (b) ownership of every change since the merge-base with main (committed, staged and unstaged)
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue
   in_owned "$f" || fail "changed file outside OWNED_FILES: $f"
-done < <(git -C "$wt" diff --name-only main)
+done < <(git -C "$wt" diff --name-only "$(wt_base "$wt")")
 
 # (c) line limit on changed files
 while IFS= read -r f; do
@@ -67,7 +67,7 @@ while IFS= read -r f; do
   line_limit_excluded "$f" && continue
   n="$(wc -l < "$wt/$f" | tr -d ' ')"
   [[ "$n" -le "$LINE_LIMIT" ]] || fail "$f has $n lines (> $LINE_LIMIT)"
-done < <(git -C "$wt" diff --name-only main)
+done < <(git -C "$wt" diff --name-only "$(wt_base "$wt")")
 
 # (d) tripwires (local-only; remote main is re-verified by orchestrate.sh)
 if ! tripwire_check "$task" --skip-remote >> "$logf" 2>&1; then

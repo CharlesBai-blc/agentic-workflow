@@ -117,6 +117,7 @@ remote_main_sha() {
   git -C "$ROOT" ls-remote origin "refs/heads/$(base_branch)" 2>/dev/null | cut -f1
 }
 wt_dir() { printf '%s/%s' "$WT_ROOT" "$1"; }
+wt_base() { git -C "$1" merge-base "$(base_branch)" HEAD 2>/dev/null || git -C "$1" rev-parse HEAD; }   # wt_base <worktree dir>
 wt_list() { git -C "$ROOT" worktree list --porcelain | awk '/^worktree /{print $2}' | grep -v "^$ROOT\$" || true; }
 json_validate() {  # json_validate <schema> <file>
   check-jsonschema --schemafile "$1" "$2" >>"$LOG_DIR/jsonschema.log" 2>&1

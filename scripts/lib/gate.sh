@@ -15,7 +15,7 @@ _gfail() { _g "GATE: FAIL $1: $2"; printf '%s: %s\n' "$1" "$2" > "$GATE_REASON";
 
 # added lines of the worktree vs main as "file:line" (untracked files included via intent-to-add)
 _added_lines() {
-  git -C "$WT" diff -U0 --no-color "$(base_branch)" -- . ':(exclude)node_modules' ':(exclude).venv' |
+  git -C "$WT" diff -U0 --no-color "$(wt_base "$WT")" -- . ':(exclude)node_modules' ':(exclude).venv' |
     awk '/^\+\+\+ b\//{f=substr($0,7)} /^@@/{split($3,a,","); s=substr(a[1],2); n=(a[2]==""?1:a[2]); for(i=0;i<n;i++) print f":"(s+i)}'
 }
 
@@ -54,7 +54,7 @@ gate_anti_cheat() {
   # grep fallback for languages ast-grep cannot parse (shell, vue, svelte, config)
   for f in "${files[@]}"; do
     case "$f" in *.ts|*.tsx|*.js|*.jsx|*.mjs|*.cjs|*.py) have ast-grep && continue ;; esac
-    hits+="$(git -C "$WT" diff -U0 --no-color "$(base_branch)" -- "$f" | grep -E '^\+[^+]' | grep -nE "$COMMENT_MARK_RE" | sed "s|^|$f:+|" || true)"
+    hits+="$(git -C "$WT" diff -U0 --no-color "$(wt_base "$WT")" -- "$f" | grep -E '^\+[^+]' | grep -nE "$COMMENT_MARK_RE" | sed "s|^|$f:+|" || true)"
   done
   hits="$(printf '%s' "$hits" | sed '/^$/d')"
   [[ -z "$hits" ]] && return 0
@@ -102,7 +102,7 @@ gate_boundaries() {
 gate_secrets() {
   _g "== gitleaks (diff vs main)"
   have gitleaks || { [[ "$FLEET_DRY_RUN" == 1 ]] && { _g "gitleaks missing: skipped (dry-run only)"; return 0; }; _gfail "gitleaks" "gitleaks not installed"; return 1; }
-  if git -C "$WT" diff --no-color "$(base_branch)" | gitleaks stdin --no-banner --redact --exit-code 1 >>"$GATE_LOG" 2>&1; then return 0; fi
+  if git -C "$WT" diff --no-color "$(wt_base "$WT")" | gitleaks stdin --no-banner --redact --exit-code 1 >>"$GATE_LOG" 2>&1; then return 0; fi
   _gfail "gitleaks" "secret detected in diff"
 }
 

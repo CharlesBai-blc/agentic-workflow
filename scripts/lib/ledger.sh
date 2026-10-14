@@ -141,3 +141,13 @@ task_fm_sync() {
   IFS='|' read -r st wave risk strikes pr < <(jq -r --arg t "$t" '.tasks[$t] | [.status, (.wave|tostring), .risk, (.strikes|tostring), (.pr_url // "")] | join("|")' "$LEDGER")
   yq --front-matter=process -i ".status = \"$st\" | .wave = $wave | .risk = \"$risk\" | .strikes = $strikes | .pr_url = \"$pr\" | .updated = \"$(now)\"" "$tf"
 }
+
+# ledger_refresh_task TASK — re-read allowlists, risk and deps from a task file rewritten by Surgery
+ledger_refresh_task() {
+  local t="$1" fm; fm="$(yq --front-matter=extract -o=json '.' "$(task_file "$t")")" || return 1
+  task_set "$t" '.title=(($fm.title // .title)|tostring) | .risk=(if $fm.risk=="high" then "high" else "low" end)
+    | .owned_files=($fm.owned_files // .owned_files) | .readonly_files=($fm.readonly_files // .readonly_files)
+    | .approved_deps=($fm.approved_deps // .approved_deps) | .acceptance_tests=($fm.acceptance_tests // .acceptance_tests)
+    | .wave=(($fm.wave // .wave)|tonumber)' --argjson fm "$fm"
+  ledger_rebuild_waves "$(task_layer "$t")"; task_fm_sync "$t"
+}
