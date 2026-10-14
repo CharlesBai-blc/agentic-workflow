@@ -1,0 +1,100 @@
+# ast-grep anti-cheat rules (zero tokens). Run by scripts/lib/gate.sh on ADDED lines only.
+# TypeScript / TSX / JavaScript ------------------------------------------------
+id: ts-test-skip-only
+language: TypeScript
+message: test skipped/focused (.skip/.only/.todo)
+rule:
+  any:
+    - pattern: $T.skip($$$)
+    - pattern: $T.only($$$)
+    - pattern: $T.todo($$$)
+constraints:
+  T: { regex: '^(describe|it|test|suite|bench|xdescribe|xit)$' }
+---
+id: ts-any-type
+language: TypeScript
+message: new `any` type
+rule: { kind: predefined_type, regex: '^any$' }
+---
+id: ts-suppress-comment
+language: TypeScript
+message: suppression or placeholder comment
+rule: { kind: comment, regex: '@ts-ignore|@ts-expect-error|@ts-nocheck|eslint-disable|\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b' }
+---
+id: ts-not-implemented
+language: TypeScript
+message: stub throw
+rule: { pattern: throw new Error($M) }
+constraints:
+  M: { regex: '(?i)not implemented|todo|unimplemented' }
+---
+id: tsx-test-skip-only
+language: Tsx
+message: test skipped/focused (.skip/.only/.todo)
+rule:
+  any:
+    - pattern: $T.skip($$$)
+    - pattern: $T.only($$$)
+    - pattern: $T.todo($$$)
+constraints:
+  T: { regex: '^(describe|it|test|suite|bench|xdescribe|xit)$' }
+---
+id: tsx-any-type
+language: Tsx
+message: new `any` type
+rule: { kind: predefined_type, regex: '^any$' }
+---
+id: tsx-suppress-comment
+language: Tsx
+message: suppression or placeholder comment
+rule: { kind: comment, regex: '@ts-ignore|@ts-expect-error|@ts-nocheck|eslint-disable|\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b' }
+---
+id: js-test-skip-only
+language: JavaScript
+message: test skipped/focused (.skip/.only/.todo)
+rule:
+  any:
+    - pattern: $T.skip($$$)
+    - pattern: $T.only($$$)
+    - pattern: $T.todo($$$)
+constraints:
+  T: { regex: '^(describe|it|test|suite|bench|xdescribe|xit)$' }
+---
+id: js-suppress-comment
+language: JavaScript
+message: suppression or placeholder comment
+rule: { kind: comment, regex: 'eslint-disable|\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b' }
+---
+# Python ----------------------------------------------------------------------
+id: py-not-implemented
+language: Python
+message: NotImplementedError stub
+rule:
+  any:
+    - pattern: raise NotImplementedError($$$)
+    - pattern: raise NotImplementedError
+---
+id: py-skip
+language: Python
+message: test skipped
+rule:
+  any:
+    - pattern: pytest.mark.skip($$$)
+    - pattern: pytest.mark.skip
+    - pattern: pytest.mark.skipif($$$)
+    - pattern: pytest.skip($$$)
+    - pattern: unittest.skip($$$)
+    - pattern: pytest.mark.xfail($$$)
+---
+id: py-suppress-comment
+language: Python
+message: suppression or placeholder comment
+rule: { kind: comment, regex: 'type:\s*ignore|noqa|pragma:\s*no cover|\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b' }
+---
+id: py-ellipsis-body
+language: Python
+message: placeholder function body
+rule:
+  pattern: |
+    def $F($$$):
+        ...

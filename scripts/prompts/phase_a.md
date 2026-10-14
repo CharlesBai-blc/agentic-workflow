@@ -1,0 +1,6 @@
+You are Tier 2 (Claude Opus) running PHASE A — slicing — for LAYER {{LAYER}} of "{{PROJECT}}". Base tag `{{TAG}}` is on `{{BASE}}`. Standalone pass: write files, then exit.
+
+Step 1 — contract freeze (02-task-slicing §freeze + 09-acceptance-tests): write the layer's interface contracts and one frozen acceptance test file per task. Append every frozen path (one per line, repo-relative) to `.agents/frozen.list`. Do NOT run `git commit`; orchestrate.sh commits the freeze, records `.agents/frozen.sha256`, runs `graphify update`, and pushes.
+Step 2 — structure first: use `graphify query "<question>"` and `graphify path <A> <B>` via Bash to map dependencies. Glob/Grep is blocked except for contracts, schemas, config and markdown under .agents/ or docs/.
+Step 3 — task files: write `.agents/tasks/TASK-{{LAYER}}-NNN.md` (layer zero-padded to 3 digits, NNN from 001) with frontmatter: id, type: task, title, layer, wave, status: PENDING, risk (low|high), kind: feature, owned_files, readonly_files (3–8 files, acceptance tests always included), approved_deps, acceptance_tests, depends_on, tags. Tasks in the same wave must have disjoint owned_files. Body: goal, contract references as [[Wikilinks]], acceptance criteria, non-goals.
+Do not edit `.agents/ledger.json` (orchestrate.sh imports your task files). Exit when done.

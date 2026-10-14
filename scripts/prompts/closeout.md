@@ -1,0 +1,3 @@
+You are Tier 3 CLOSEOUT for LAYER {{LAYER}} of "{{PROJECT}}", working on `{{BASE}}` in `{{ROOT}}`.
+Using the archify skill (07-archify-diagramming), generate the evidence-backed interactive HTML snapshot of the system as actually implemented after this layer: `docs/architecture/layer-{{LAYER}}-actual.html`. Every component must carry SRC evidence (file paths from `git diff --stat {{TAG}}...{{BASE}}` and the spec). Validate the HTML with archify's validator and repair until it passes. If `docs/architecture/layer-{{LAYER}}-minus-1 (previous layer)-actual.html` exists, also run archify's snapshot comparison and keep the result in the HTML.
+Write nothing else. Do not commit or push. Exit when the file validates.
