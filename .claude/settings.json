@@ -6,8 +6,6 @@
       "Agent",
       "Bash(git reset --hard:*)",
       "Bash(rm -rf:*)",
-      "Bash(git push:*)",
-      "Bash(gh:*)",
       "WebFetch",
       "WebSearch"
     ],
