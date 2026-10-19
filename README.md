@@ -43,7 +43,7 @@ uv tool install import-linter && uv tool install vulture    # Python projects
 # 3. Logins (browser opens for each; never use API keys)
 codex login            # Sign in with ChatGPT
 claude                 # pick the Claude subscription login, then /exit
-gh auth login          # GitHub.com, HTTPS, yes to git credentials
+gh auth login          # GitHub.com, SSH, upload your key if asked
 unset OPENAI_API_KEY ANTHROPIC_API_KEY
 
 # 4. Phone
@@ -58,9 +58,9 @@ Repeat this for every new idea. About an hour of your time, then the fleet runs 
 
 ```bash
 # on GitHub: create an empty repo, e.g. you/my-new-thing (no README), then:
-git clone https://github.com/CharlesBai-blc/agentic-workflow.git my-new-thing
+git clone git@github.com:CharlesBai-blc/agentic-workflow.git my-new-thing
 cd my-new-thing
-git remote set-url origin https://github.com/you/my-new-thing.git
+git remote set-url origin git@github.com:you/my-new-thing.git
 rm -rf .git && git init -b main && git add -A && git commit -m "Fleet template"
 git push -u origin main
 ```
