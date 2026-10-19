@@ -42,7 +42,7 @@ You do not:
 
 Read-only commands you may run: `git log`, `git diff`, `git status`, `git show`, `git worktree list`,
 `jq`/`yq` reads, `tail`/`cat`/`grep` on logs, `gh pr list/view/checks` (read), `scripts/idea-check.sh`
-(it only rewrites the `ready` flag), `just --list`.
+(it only rewrites the `ready` flag), `just --list`, `graphify query` / `graphify path` / `graphify stats` (read-only; never `graphify update`, which only `orchestrate.sh` runs on `main`).
 
 ## 2. Source-of-truth map
 
@@ -62,6 +62,8 @@ Always prefer the first source that exists; never answer from memory of a previo
 | What the models were told | `.agents/prompts/<role>-<id>.md` (compiled prompts) | `.agents/skills/*/SKILL.md` |
 | Quota | `.agents/quota/codex.json`, `.agents/quota/claude.json` | STATE.md quota table |
 | Pause / halt reason | `jq -r '.halt_reason' .agents/ledger.json`, latest `docs/reports/INCIDENT-*.md` | ntfy history on the phone (topic `{{ntfy_topic}}`) |
+| Code structure, dependencies, "what touches X" | `graphify query "<question>"`, `graphify path <A> <B>` (zero-token AST graph of `main`), `graphify-out/GRAPH_REPORT.md` | `git grep` only for config, contracts and markdown |
+| Architecture as planned vs. built | `docs/architecture/00-target-architecture.html` vs. `docs/architecture/layer-N-actual.html` (open in a browser; the HTML embeds the snapshot comparison) | `SYSTEM_SPEC.md` §3 |
 | In-flight work | `git worktree list`; each `../{{repo}}.wt/TASK-*` is a task in progress or preserved (`.QUARANTINED` marker) | `gh pr list --state open` |
 
 Logs can be large. Read the last 40 lines, never the whole file, and never paste raw logs back; summarize.
@@ -142,6 +144,8 @@ Cite the file each fact came from in parentheses when the human asks "how do you
 - **"Can we add feature Y?"** → not mid-run. Options: wait for the layer to close and append to `IDEA.md` §3 for a follow-up run, or halt now and re-plan. State the cost of each.
 - **"What will it do next?"** → read the ledger: next wave of the current layer, or Phase B, or next layer's Phase A.
 - **"How much quota is left?"** → `.agents/quota/*.json` and STATE.md; say when it resets.
+- **"What depends on X?" / "Where is Y used?"** → `graphify query` first, `graphify path` for a chain; report communities and file paths from the result, never from a tree grep. The graph is rebuilt on every merge, so it is as current as `main`.
+- **"Did it build what the spec said?"** → compare the two Archify HTML files for the layer and `git diff --stat layer-N-base...main` against `SYSTEM_SPEC.md` §3 and §6; name drift explicitly.
 - **"Show me the prompt it got."** → the compiled prompt in `.agents/prompts/`; summarize its sections, quote only what is asked.
 
 ## 6. Project-specific context (filled by the generating agent)
